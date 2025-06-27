@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spelling Bee</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      width: 100vw;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #f9fbe7 0%, #ffe082 100%);
+      color: #333;
+    }
+    .all {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2vw;
+    }
+    img {
+      width: 25vw;
+      max-width: 200px;
+      height: auto;
+      margin-top: 3vh;
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin: 2vh 0 1vh 0;
+      text-align: center;
+    }
+    .score {
+      font-size: 1.2rem;
+      margin: 1vh 0;
+    }
+    .difficulty {
+      margin: 1vh 0 2vh 0;
+      display: flex;
+      gap: 1vw;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .difficulty button {
+      padding: 0.5em 1.2em;
+      border: none;
+      border-radius: 20px;
+      background: #ffd600;
+      color: #333;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .difficulty button.active {
+      background: #ffab00;
+      color: #fff;
+    }
+    #input {
+      margin-top: 2vh;
+      width: 80vw;
+      max-width: 400px;
+      padding: 10px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    #btn, .btn2 {
+      width: 80vw;
+      max-width: 200px;
+      padding: 10px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      margin: 2vh 0 1vh 0;
+      cursor: pointer;
+      background-color: #00bcd4;
+      color: #fff;
+      transition: background 0.2s;
+    }
+    #btn:hover, .btn2:hover {
+      background-color: #0097a7;
+    }
+    .btn2 {
+      background-color: #ffd600;
+      color: #333;
+      margin: 1vh 1vw 1vh 1vw;
+      max-width: 150px;
+    }
+    .btn2:disabled {
+      background: #eee;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+    #cont {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1vw;
+    }
+    .timer {
+      font-size: 1.2rem;
+      margin: 1vh 0;
+      color: #d84315;
+      font-weight: bold;
+    }
+    #leaderboard {
+      margin-top: 2vh;
+      width: 100%;
+      max-width: 400px;
+      background: #fffde7;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #0001;
+      padding: 1em;
+      font-size: 1.1em;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.3rem; }
+      #input, #btn, .btn2 { font-size: 1rem; }
+      img { width: 40vw; max-width: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="all">
+    <h1>Avery's Spelling Bee Championship</h1>
+    <div class="score" id="score">Score: 0</div>
+    <div class="difficulty">
+      <button id="easy" class="active">Easy</button>
+      <button id="medium">Medium</button>
+      <button id="hard">Hard</button>
+    </div>
+    <p>Click the button to generate a new word.</p>
+    <img src="bee.jpg" alt="image of logo">
+    <div class="timer" id="timer">Timer: 00</div>
+    <input type="text" id="input" placeholder="Enter the word here" autocomplete="off">
+    <button id="btn">Generate A New Word</button>
+    <div id="cont">
+      <button id="speak" class="btn2" disabled>Speak</button>
+      <button id="submit" class="btn2" disabled>Submit</button>
+    </div>
+    <div id="leaderboard"></div>
+  </div>
+
+  <!-- SOUND EFFECTS -->
+  <audio id="snd-correct" src="sounds/correct.mp3"></audio>
+  <audio id="snd-wrong" src="sounds/wrong.mp3"></audio>
+  <audio id="snd-tick" src="sounds/tick.mp3"></audio>
+
+  <script>
+    // --- WORD LISTS ---
+    const easyWords = [
+      "cat", "dog", "sun", "hat", "bat", "pen", "map", "run", "red", "cup",
+      "book", "fish", "tree", "ball", "milk", "frog", "sock", "cake", "lamp", "star",
+      "car", "bus", "bed", "duck", "box", "goat", "kite", "moon", "nose", "soap",
+      "leaf", "corn", "king", "girl", "boy", "rice", "fork", "door", "feet", "hand",
+      "bee", "ant", "cow", "apple", "grape", "corn", "shoe", "rope", "net", "fan",
+      "train", "glass", "wood", "bell", "tiger", "chair", "zip", "pot", "key", "ship"
+    ];
+    const mediumWords = [
+      "banana", "pencil", "window", "rocket", "planet", "purple", "school", "butter", "yellow", "camera",
+      "animal", "father", "mother", "sister", "brother", "friend", "garden", "cookie", "donkey", "chicken",
+      "bottle", "family", "candle", "toaster", "breeze", "circle", "zebra", "dancer", "market", "handle",
+      "pillow", "orange", "castle", "monkey", "puzzle", "drawer", "guitar", "flower", "letter", "tunnel",
+      "doctor", "hammer", "ladder", "jacket", "butterfly", "sandwich", "basket", "parrot", "bridge", "rocket",
+      "carpet", "bicycle", "window", "napkin", "helmet", "jungle", "vacuum", "gloves", "button", "kitten"
+    ];
+    const hardWords = [
+      "elephant", "whistle", "knight", "science", "pyramid", "brought", "through", "thought", "island", "adventure",
+      "machine", "library", "treasure", "weather", "bicycle", "building", "mystery", "volcano", "imagine", "capture",
+      "package", "jewelry", "refrigerator", "question", "castle", "squirrel", "calendar", "receipt", "clothing", "mountain",
+      "history", "mirror", "whenever", "explorer", "kangaroo", "penguin", "dinosaur", "plumber", "knuckle", "gnome",
+      "scissors", "autumn", "journey", "recycle", "character", "submarine", "musician", "caterpillar", "horizon", "airplane",
+      "triangle", "meadow", "crocodile", "dolphin", "astronaut", "dangerous", "medicine", "thunder", "cinnamon", "centaur"
+    ];
+    const wordLists = {
+      easy: easyWords,
+      medium: mediumWords,
+      hard: hardWords
+    };
+
+    let leaderboard = JSON.parse(localStorage.getItem('spellbee_lb') || '[]');
+
+    // --- DOM ELEMENTS & GAME STATE ---
+    let word = '';
+    let score = 0;
+    let timer = null;
+    let timeLeft = 0;
+    let currentDifficulty = 'easy';
+    const input = document.getElementById('input');
+    const btn = document.getElementById('btn');
+    const speakBtn = document.getElementById('speak');
+    const submitBtn = document.getElementById('submit');
+    const scoreDisplay = document.getElementById('score');
+    const timerDisplay = document.getElementById('timer');
+    const diffBtns = {
+      easy: document.getElementById('easy'),
+      medium: document.getElementById('medium'),
+      hard: document.getElementById('hard')
+    };
+
+    function playSound(id) {
+      const s = document.getElementById(id);
+      s.currentTime = 0;
+      s.play();
+    }
+
+    function saveScore(name, score) {
+      leaderboard.push({ name, score, date: Date.now() });
+      leaderboard.sort((a, b) => b.score - a.score);
+      leaderboard = leaderboard.slice(0, 10);
+      localStorage.setItem('spellbee_lb', JSON.stringify(leaderboard));
+    }
+
+    function renderLeaderboard() {
+      const lb = document.getElementById('leaderboard');
+      if (!leaderboard.length) return lb.innerHTML = '';
+      let html = '<h3>🏆 Leaderboard</h3><ol>';
+      leaderboard.forEach(e => html += `<li>${e.name}: ${e.score}</li>`);
+      html += '</ol>';
+      lb.innerHTML = html;
+    }
+
+    function endGamePrompt() {
+      const name = prompt("Enter your name for leaderboard:", "Avery");
+      if (name) saveScore(name, score);
+      renderLeaderboard();
+    }
+
+    function tickTimer() {
+      playSound('snd-tick');
+    }
+
+    // --- DIFFICULTY BUTTONS ---
+    diffBtns.easy.onclick = () => setDifficulty('easy');
+    diffBtns.medium.onclick = () => setDifficulty('medium');
+    diffBtns.hard.onclick = () => setDifficulty('hard');
+    function setDifficulty(level) {
+      currentDifficulty = level;
+      for (let key in diffBtns) diffBtns[key].classList.remove('active');
+      diffBtns[level].classList.add('active');
+      resetGame();
+    }
+
+    // --- WORD GENERATION ---
+    function getRandomWord() {
+      const list = wordLists[currentDifficulty];
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    // --- TIMER ---
+    function getTimeForDifficulty() {
+      if (currentDifficulty === 'easy') return 15;
+      if (currentDifficulty === 'medium') return 12;
+      return 10;
+    }
+    function startTimer() {
+      if (timer) clearInterval(timer);
+      timeLeft = getTimeForDifficulty();
+      timerDisplay.textContent = `Timer: ${timeLeft}`;
+      timer = setInterval(() => {
+        timeLeft--;
+        playSound('snd-tick');
+        timerDisplay.textContent = `Timer: ${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          playSound('snd-wrong');
+          timerDisplay.textContent = 'Time up!';
+          input.disabled = true;
+          speakBtn.disabled = true;
+          submitBtn.disabled = true;
+          setTimeout(() => {
+            alert(`Time's up! The word was: ${word}`);
+            resetGame();
+          }, 500);
+        }
+      }, 1000);
+    }
+
+    // --- SPEAK WORD ---
+    function speakWord() {
+      if (!word) return;
+      let voice = new SpeechSynthesisUtterance();
+      voice.text = word;
+      voice.rate = 0.8;
+      voice.pitch = 1;
+      voice.lang = 'en-US';
+      speechSynthesis.speak(voice);
+    }
+    speakBtn.onclick = function() { speakWord(); };
+
+    // --- RESET GAME ---
+    function resetGame() {
+      word = '';
+      input.value = '';
+      input.disabled = true;
+      speakBtn.disabled = true;
+      submitBtn.disabled = true;
+      timerDisplay.textContent = 'Timer: 00';
+      if (timer) clearInterval(timer);
+    }
+
+    // --- GENERATE NEW WORD ---
+    btn.onclick = function() {
+      if (score && !word) { // first click after playing
+        endGamePrompt();
+        score = 0;
+        scoreDisplay.textContent = `Score: ${score}`;
+      }
+      word = getRandomWord();
+      input.value = '';
+      input.disabled = false;
+      speakBtn.disabled = false;
+      submitBtn.disabled = false;
+      input.focus();
+      speakWord();
+      startTimer();
+    };
+
+    // --- SUBMIT BUTTON ---
+    submitBtn.onclick = function() {
+      if (!word) return;
+      if (timer) clearInterval(timer);
+      const userInput = input.value.trim().toLowerCase();
+      if (userInput === word.toLowerCase()) {
+        score++;
+        scoreDisplay.textContent = `Score: ${score}`;
+        playSound('snd-correct');
+        timerDisplay.textContent = 'Correct!';
+        setTimeout(() => btn.click(), 800);
+      } else {
+        playSound('snd-wrong');
+        timerDisplay.textContent = 'Incorrect!';
+        setTimeout(() => {
+          alert(`Incorrect! The word was: ${word}`);
+          resetGame();
+        }, 500);
+      }
+      input.disabled = true;
+      speakBtn.disabled = true;
+      submitBtn.disabled = true;
+    };
+
+    // --- ENTER KEY SUBMIT ---
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !submitBtn.disabled) {
+        submitBtn.click();
+      }
+    });
+
+    // --- ON LOAD ---
+    resetGame();
+    renderLeaderboard();
+  </script>
+</body>
+</html>

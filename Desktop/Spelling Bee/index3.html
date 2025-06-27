@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Bee</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            width: 100vw;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f9fbe7 0%, #ffe082 100%);
+            color: #333;
+        }
+        .all {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2vw;
+        }
+        img {
+            width: 25vw;
+            max-width: 200px;
+            height: auto;
+            margin-top: 3vh;
+        }
+        h1 {
+            font-size: 2.2rem;
+            margin: 2vh 0 1vh 0;
+            text-align: center;
+        }
+        .score {
+            font-size: 1.2rem;
+            margin: 1vh 0;
+        }
+        .difficulty {
+            margin: 1vh 0 2vh 0;
+            display: flex;
+            gap: 1vw;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .difficulty button {
+            padding: 0.5em 1.2em;
+            border: none;
+            border-radius: 20px;
+            background: #ffd600;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .difficulty button.active {
+            background: #ffab00;
+            color: #fff;
+        }
+        #input {
+            margin-top: 2vh;
+            width: 80vw;
+            max-width: 400px;
+            padding: 10px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+        #btn, .btn2 {
+            width: 80vw;
+            max-width: 200px;
+            padding: 10px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            margin: 2vh 0 1vh 0;
+            cursor: pointer;
+            background-color: #00bcd4;
+            color: #fff;
+            transition: background 0.2s;
+        }
+        #btn:hover, .btn2:hover {
+            background-color: #0097a7;
+        }
+        .btn2 {
+            background-color: #ffd600;
+            color: #333;
+            margin: 1vh 1vw 1vh 1vw;
+            max-width: 150px;
+        }
+        .btn2:disabled {
+            background: #eee;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+        #cont {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1vw;
+        }
+        .timer {
+            font-size: 1.2rem;
+            margin: 1vh 0;
+            color: #d84315;
+            font-weight: bold;
+        }
+        .howtoplay-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            align-items: center;
+            justify-content: center;
+        }
+        .howtoplay-modal > div {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 95vw;
+            width: 420px;
+            padding: 2em;
+            box-shadow: 0 4px 32px #0002;
+            position: relative;
+        }
+        .howtoplay-modal h2 {
+            text-align: center;
+        }
+        .howtoplay-modal h3 {
+            margin-top: 1.5em;
+        }
+        .howtoplay-modal ol, .howtoplay-modal ul {
+            margin-left: 1.2em;
+            margin-top: 0.5em;
+        }
+        .howtoplay-modal button.close {
+            position: absolute;
+            top: 1em;
+            right: 1em;
+            font-size: 1.5em;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 1.3rem; }
+            #input, #btn, .btn2 { font-size: 1rem; }
+            img { width: 40vw; max-width: 120px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="all">
+        <h1>Avery's Spelling Bee Championship</h1>
+        <div class="score" id="score">Score: 0</div>
+        <div class="difficulty">
+            <button id="easy" class="active">Easy</button>
+            <button id="medium">Medium</button>
+            <button id="hard">Hard</button>
+        </div>
+        <p>Click the button to generate a new word.</p>
+        <img src="bee.jpg" alt="image of logo">
+        <div class="timer" id="timer">Timer: 00</div>
+        <input type="text" id="input" placeholder="Enter the word here" autocomplete="off">
+        <button id="btn">Generate A New Word</button>
+        <div id="cont">
+            <button id="speak" class="btn2" disabled>Speak</button>
+            <button id="submit" class="btn2" disabled>Submit</button>
+        </div>
+    </div>
+    <div class="howtoplay-modal" id="howtoplay-modal" style="display:none;position:fixed;z-index:1000;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:16px;max-width:95vw;width:420px;padding:2em;box-shadow:0 4px 32px #0002;position:relative;">
+        <button onclick="document.getElementById('howtoplay-modal').style.display='none'" class="close" style="position:absolute;top:1em;right:1em;font-size:1.5em;background:none;border:none;cursor:pointer;">&times;</button>
+        <h2 style="text-align:center;">📜 SpellQuest Jr. – Game Rules</h2>
+        <h3>🎯 Objective</h3>
+        <p>Unscramble the shuffled letters to spell the correct word before time runs out. Try to get as many right as possible over the number of rounds you choose!</p>
+        <h3>🕹️ How to Play</h3>
+        <ol>
+          <li><b>Choose Your Settings:</b>
+            <ul>
+              <li>Select the number of rounds (1–20).</li>
+              <li>Set a time limit per word (5–60 seconds).</li>
+              <li>Pick a difficulty level: Easy, Medium, or Hard.</li>
+            </ul>
+          </li>
+          <li><b>Game Begins:</b>
+            <ul>
+              <li>A <b>shuffled version</b> of a word appears on screen.</li>
+              <li>The game reads the correct word aloud using <b>text-to-speech</b>.</li>
+              <li>You type your best guess into the input box.</li>
+            </ul>
+          </li>
+          <li><b>Submit Your Guess:</b>
+            <ul>
+              <li>Hit <b>Submit</b> before time runs out.</li>
+              <li>You can replay the word aloud with the <b>🔊 Hear Word</b> button.</li>
+            </ul>
+          </li>
+          <li><b>Scoring:</b>
+            <ul>
+              <li>✅ <b>Correct guess</b>: +1 point</li>
+              <li>❌ <b>Wrong guess or timeout</b>: 0 points</li>
+              <li>Your total score is shown at the end.</li>
+            </ul>
+          </li>
+        </ol>
+        <h3>🧠 Difficulty Levels</h3>
+        <ul>
+          <li><b>Easy</b>: 3–4 letter simple words (e.g., "dog", "fish")</li>
+          <li><b>Medium</b>: 5–7 letter words (e.g., "banana", "garden")</li>
+          <li><b>Hard</b>: 8+ letter challenging words (e.g., "architecture", "imagination")</li>
+        </ul>
+        <h3>💡 Pro Tips</h3>
+        <ul>
+          <li>Focus on listening to the spoken word—it helps!</li>
+          <li>Look at common prefixes/suffixes to help unscramble.</li>
+          <li>Want a real challenge? Turn down the timer and go for Hard mode!</li>
+        </ul>
+      </div>
+    </div>
+    <button id="howtoplay-btn" style="position:fixed;bottom:2vw;right:2vw;z-index:1100;padding:0.7em 1.2em;font-size:1.1em;border-radius:8px;background:#ffd600;color:#333;border:none;box-shadow:0 2px 8px #0001;cursor:pointer;">How to Play</button>
+<script>
+// Word lists by difficulty
+const wordLists = {
+    easy: [
+        "apple", "bottle", "cat", "dog", "egg", "fish", "goat", "hat", "ice", "jam", "kite", "lemon", "moon", "nest", "owl", "pig", "queen", "rat", "sun", "tree", "van", "wolf", "yak", "zebra"
+    ],
+    medium: [
+        "castle", "dinosaur", "elephant", "friend", "giraffe", "honey", "island", "jungle", "kangaroo", "monkey", "night", "octopus", "pencil", "rainbow", "school", "tiger", "umbrella", "volcano", "whale", "xylophone", "yogurt"
+    ],
+    hard: [
+        "acquaintance", "boulevard", "camouflage", "daiquiri", "entrepreneur", "fuchsia", "gnocchi", "hemorrhage", "indictment", "juxtapose", "knapsack", "liaison", "mnemonic", "nauseous", "onomatopoeia", "paraphernalia", "quizzical", "rendezvous", "silhouette", "tsunami", "ukulele", "vicissitude", "worcestershire", "xylophonist", "yacht", "zephyr"
+    ]
+};
+let currentDifficulty = 'easy';
+let word = '';
+let score = 0;
+let timer = null;
+let timeLeft = 0;
+let maxTime = 15; // seconds, will change by difficulty
+
+const scoreDisplay = document.getElementById('score');
+const timerDisplay = document.getElementById('timer');
+const input = document.getElementById('input');
+const btn = document.getElementById('btn');
+const speakBtn = document.getElementById('speak');
+const submitBtn = document.getElementById('submit');
+const diffBtns = {
+    easy: document.getElementById('easy'),
+    medium: document.getElementById('medium'),
+    hard: document.getElementById('hard')
+};
+
+function setDifficulty(level) {
+    currentDifficulty = level;
+    for (let key in diffBtns) {
+        diffBtns[key].classList.remove('active');
+    }
+    diffBtns[level].classList.add('active');
+    resetGame();
+}
+
+diffBtns.easy.onclick = () => setDifficulty('easy');
+diffBtns.medium.onclick = () => setDifficulty('medium');
+diffBtns.hard.onclick = () => setDifficulty('hard');
+
+function resetGame() {
+    word = '';
+    input.value = '';
+    speakBtn.disabled = true;
+    submitBtn.disabled = true;
+    timerDisplay.textContent = 'Timer: 00';
+    if (timer) clearInterval(timer);
+}
+
+function getRandomWord() {
+    const list = wordLists[currentDifficulty];
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+function getTimeForDifficulty() {
+    if (currentDifficulty === 'easy') return 15;
+    if (currentDifficulty === 'medium') return 12;
+    return 10;
+}
+
+function startTimer() {
+    if (timer) clearInterval(timer);
+    timeLeft = getTimeForDifficulty();
+    timerDisplay.textContent = `Timer: ${timeLeft}`;
+    timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = `Timer: ${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            timerDisplay.textContent = 'Time up!';
+            input.disabled = true;
+            speakBtn.disabled = true;
+            submitBtn.disabled = true;
+            setTimeout(() => {
+                alert(`Time's up! The word was: ${word}`);
+                input.disabled = false;
+                resetGame();
+            }, 500);
+        }
+    }, 1000);
+}
+
+function speakWord() {
+    if (!word) return;
+    let voice = new SpeechSynthesisUtterance();
+    voice.text = word;
+    voice.rate = 0.8;
+    voice.pitch = 1;
+    voice.lang = 'en-US';
+    speechSynthesis.speak(voice);
+}
+
+btn.onclick = function() {
+    word = getRandomWord();
+    input.value = '';
+    input.disabled = false;
+    speakBtn.disabled = false;
+    submitBtn.disabled = false;
+    input.focus();
+    speakWord();
+    startTimer();
+};
+
+speakBtn.onclick = function() {
+    speakWord();
+};
+
+submitBtn.onclick = function() {
+    if (!word) return;
+    if (timer) clearInterval(timer);
+    let userInput = input.value.trim();
+    if (userInput.toLowerCase() === word.toLowerCase()) {
+        score++;
+        scoreDisplay.textContent = `Score: ${score}`;
+        timerDisplay.textContent = 'Correct!';
+        setTimeout(() => {
+            input.value = '';
+            btn.click();
+        }, 800);
+    } else {
+        timerDisplay.textContent = 'Incorrect!';
+        setTimeout(() => {
+            alert(`Incorrect! The word was: ${word}`);
+            resetGame();
+        }, 500);
+    }
+    input.disabled = true;
+    speakBtn.disabled = true;
+    submitBtn.disabled = true;
+};
+
+input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !submitBtn.disabled) {
+        submitBtn.click();
+    }
+});
+
+document.getElementById('howtoplay-btn').onclick = function() {
+  document.getElementById('howtoplay-modal').style.display = 'flex';
+}
+
+// Responsive: resize input/buttons on orientation change
+window.addEventListener('resize', () => {
+    // No-op, but could be used for further dynamic adjustments
+});
+
+// On load, reset everything
+resetGame();
+</script>
+</body>
+</html>
