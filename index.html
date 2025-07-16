@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Avery's Riddle Me This?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #fefefe;
+      --text: #000;
+      --box: #ffffff;
+    }
+    body.dark {
+      --bg: #1e1e1e;
+      --text: #f0f0f0;
+      --box: #2c2c2c;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 1em;
+    }
+    h1, h2 {
+      color: #4A90E2;
+    }
+    #riddle-box {
+      background: var(--box);
+      padding: 1em;
+      border-radius: 6px;
+      margin-bottom: 1em;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+      margin: 0.5em 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    #feedback {
+      font-weight: bold;
+      margin-top: 1em;
+    }
+    #score {
+      font-size: 1.2em;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .row button {
+      flex: 1;
+    }
+    @media (max-width: 600px) {
+      .row {
+        flex-direction: column;
+      }
+    }
+    .centered-header {
+      text-align: center;
+      margin-bottom: 1em;
+    }
+    .centered-header img {
+      margin-top: 0.5em;
+      height: 125px;
+      border-radius: 5px;
+    }
+    .centered-header button {
+      margin-top: 1em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="centered-header">
+  <h1 id="title" style="font-size: 2.2em;"></h1>
+  <img src="logo.jpg" alt="product logo" />
+  <br />
+  <button onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
+</div>
+
+<p>Welcome to <strong>Avery's Riddle Me This?</strong>! A fun and interactive way to challenge your mind with riddles.</p>
+<p>Test your wits with riddles of varying difficulty levels. Whether you're a riddle master or a curious beginner, there's something here for everyone!</p>
+<p>Use the dropdown to select a difficulty level, then click "New Riddle" to get started. You can also add your own riddles to the mix!</p>
+<p>Ready to put your brain to the test? Let's get started!</p>
+
+<h2>🎮 Choose Level</h2>
+<select id="level-select">
+  <option value="Easy">Easy</option>
+  <option value="Medium">Medium</option>
+  <option value="Hard">Hard</option>
+  <option value="Custom">Custom (Your Own Riddles)</option>
+</select>
+<button onclick="loadRiddle()">🎲 New Riddle</button>
+
+<div id="riddle-box" style="display:none;">
+  <h2>🧩 Riddle:</h2>
+  <p id="riddle-text"></p>
+  <input type="text" id="user-answer" placeholder="Type your answer or use the mic 🎤" />
+  <div class="row">
+    <button onclick="startListening()">🎤 Speak</button>
+    <button onclick="checkAnswer()">✅ Submit</button>
+    <button onclick="showHint()">💡 Hint</button>
+    <button onclick="readRiddle()">🔊 Read</button>
+  </div>
+  <p id="feedback"></p>
+  <p id="hint-text" style="color: #888;"></p>
+</div>
+
+<h2>📈 Score</h2>
+<p id="score">Score: 0 / 0</p>
+
+<h2>✍️ Add Your Own Riddle</h2>
+<textarea id="new-riddle" placeholder="Your riddle here..."></textarea>
+<input type="text" id="new-answer" placeholder="Correct answer..." />
+<div class="row">
+  <button onclick="addCustomRiddle()">➕ Add Riddle</button>
+  <button onclick="clearCustomRiddles()">🗑️ Clear Custom Riddles</button>
+</div>
+<p id="add-feedback" style="color: green;"></p>
+
+<!-- Audio Elements -->
+<audio id="correct-sound" src="sounds/correct.mp3"></audio>
+<audio id="wrong-sound" src="sounds/wrong.mp3"></audio>
+
+<script>
+  const riddles = {
+    Easy: [
+      { q: "What has hands but can’t clap?", a: "a clock" },
+      { q: "What has to be broken before you can use it?", a: "an egg" },
+      { q: "What has keys but can't open locks?", a: "a piano" },
+      { q: "What has words but never speaks?", a: "a book" },
+      { q: "What has a neck but no head?", a: "a bottle" },
+      { q: "What has a face and two hands but no arms or legs?", a: "a clock" },
+      { q: "What can you keep after giving it to someone?", a: "your word" }
+    ],
+    Medium: [
+      { q: "What gets wetter the more it dries?", a: "a towel" },
+      { q: "What has one eye but can’t see?", a: "a needle" },
+      { q: "What can travel around the world while staying in a corner?", a: "a stamp" },
+      { q: "What has a heart that doesn’t beat?", a: "an artichoke" },
+      { q: "What begins with T, ends with T, and has T in it?", a: "a teapot" },
+      { q: "What can you catch but not throw?", a: "a cold" },
+      { q: "What has a thumb and four fingers but is not alive?", a: "a glove" }
+    ],
+    Hard: [
+      { q: "The more you take, the more you leave behind. What am I?", a: "footsteps" },
+      { q: "What comes once in a minute, twice in a moment, but never in a thousand years?", a: "the letter m" },
+      { q: "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?", a: "an echo" },
+      { q: "What can you hold in your left hand but not in your right?", a: "your right elbow" },
+      { q: "What has cities, but no houses; forests, but no trees; and rivers, but no water?", a: "a map" },
+      { q: "I can be cracked, made, told, and played. What am I?", a: "a joke" },
+      { q: "What has keys but can't open locks?", a: "a piano" }
+    ],
+    Custom: []
+  };
+
+  let currentRiddle = null;
+  let score = 0;
+  let attempts = 0;
+
+  function toggleDarkMode() {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("darkMode", document.body.classList.contains("dark"));
+  }
+
+  function loadRiddle() {
+    const level = document.getElementById("level-select").value;
+    const pool = riddles[level];
+    if (!pool.length) return alert("No riddles in this category yet!");
+    currentRiddle = pool[Math.floor(Math.random() * pool.length)];
+    document.getElementById("riddle-text").innerText = currentRiddle.q;
+    document.getElementById("user-answer").value = "";
+    document.getElementById("feedback").innerText = "";
+    document.getElementById("hint-text").innerText = "";
+    document.getElementById("riddle-box").style.display = "block";
+    readRiddle();
+  }
+
+  function checkAnswer() {
+    const input = document.getElementById("user-answer").value.trim().toLowerCase();
+    attempts++;
+    if (input === currentRiddle.a.toLowerCase()) {
+      score++;
+      document.getElementById("feedback").innerText = "🎉 Correct!";
+      document.getElementById("feedback").style.color = "limegreen";
+      document.getElementById("correct-sound").play();
+    } else {
+      document.getElementById("feedback").innerText = "❌ Not quite. Try again!";
+      document.getElementById("feedback").style.color = "crimson";
+      document.getElementById("wrong-sound").play();
+    }
+    updateScore();
+  }
+
+  function showHint() {
+    const hints = [
+      "Think about the keywords.",
+      "Break it into parts.",
+      "It might be a pun or play on words.",
+      "Consider common phrases.",
+    ];
+    document.getElementById("hint-text").innerText = "💡 " + hints[Math.floor(Math.random() * hints.length)];
+  }
+
+  function updateScore() {
+    document.getElementById("score").innerText = `Score: ${score} / ${attempts}`;
+  }
+
+  function addCustomRiddle() {
+    const q = document.getElementById("new-riddle").value.trim();
+    const a = document.getElementById("new-answer").value.trim();
+    if (!q || !a) return alert("Fill out both fields.");
+    riddles.Custom.push({ q, a });
+    localStorage.setItem("customRiddles", JSON.stringify(riddles.Custom));
+    document.getElementById("add-feedback").innerText = "✅ Riddle added!";
+    document.getElementById("new-riddle").value = "";
+    document.getElementById("new-answer").value = "";
+  }
+
+  function clearCustomRiddles() {
+    if (confirm("Are you sure you want to delete all custom riddles?")) {
+      riddles.Custom = [];
+      localStorage.removeItem("customRiddles");
+      alert("Custom riddles cleared.");
+    }
+  }
+
+  function startListening() {
+    if (!('webkitSpeechRecognition' in window)) return alert("Speech recognition not supported.");
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.start();
+    recognition.onresult = event => {
+      document.getElementById("user-answer").value = event.results[0][0].transcript;
+    };
+  }
+
+  function readRiddle() {
+    if (!currentRiddle || !currentRiddle.q) return;
+    const msg = new SpeechSynthesisUtterance(currentRiddle.q);
+    msg.lang = 'en-US';
+    msg.pitch = 1;
+    msg.rate = 1;
+    speechSynthesis.speak(msg);
+  }
+
+  // Dynamic title animation
+  const titleText = "🧠 Avery's Riddle Me This?";
+  let i = 0;
+  function typeWriter() {
+    if (i < titleText.length) {
+      document.getElementById("title").innerHTML += titleText.charAt(i);
+      i++;
+      setTimeout(typeWriter, 50);
+    }
+  }
+
+  window.onload = () => {
+    typeWriter();
+    const saved = localStorage.getItem("customRiddles");
+    if (saved) riddles.Custom = JSON.parse(saved);
+    if (localStorage.getItem("darkMode") === "true") document.body.classList.add("dark");
+  };
+</script>
+
+</body>
+</html>
