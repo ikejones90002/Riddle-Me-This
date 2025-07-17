@@ -65,7 +65,7 @@ if 'attempts' not in st.session_state:
 # -------------------------------
 # Safe Image Loader
 # -------------------------------
-def safe_image("logo.jpg", width=200):
+def safe_image(path, width=200):
     if os.path.exists(path):
         st.image(path, width=width)
     else:
