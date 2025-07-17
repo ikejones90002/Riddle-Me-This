@@ -1,6 +1,7 @@
-import streamlit as st
-import requests
+import streamlit as st  # type: ignore
+import requests  # type: ignore
 import random
+import os
 
 # -------------------------------
 # Riddles Dataset
@@ -62,10 +63,19 @@ if 'attempts' not in st.session_state:
     st.session_state.attempts = 0
 
 # -------------------------------
+# Safe Image Loader
+# -------------------------------
+def safe_image(path, width=200):
+    if os.path.exists(path):
+        st.image(path, width=width)
+    else:
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/480px-No_image_available.svg.png", width=width, caption="Missing logo")
+
+# -------------------------------
 # Sidebar
 # -------------------------------
 with st.sidebar:
-    st.image("logo.jpg", width=200)
+    safe_image("logo.jpg", width=200)
     st.title("📜 Game Info")
 
     st.subheader("🎯 Rules")
@@ -102,14 +112,12 @@ with st.sidebar:
 # Main App Content
 # -------------------------------
 st.title("🧠 Avery's Riddle Me This?")
-st.image("logo.jpg", width=200)
+safe_image("logo.jpg", width=200)
 st.markdown("Welcome to Avery's Riddle Me This? where you can solve riddles, learn, and have fun! 🎉")
-level = st.selectbox("Choose your difficulty level:", ["Easy", "Medium", "Hard"])
 
-if st.button("🎲 New Riddle"):
-    st.session_state.riddle = random.choice(riddles[level])
-    st.session_state.last_result = None
+level = st.selectbox("Choose your difficulty level:", ["Easy", "Medium", "Hard"])
 mode = st.radio("Choose a mode:", ["Solve a riddle", "Stump the AI with your own riddle"])
+
 if mode == "Solve a riddle":
     if st.button("🎲 New Riddle"):
         st.session_state.riddle = random.choice(riddles[level])
@@ -122,6 +130,7 @@ if mode == "Solve a riddle":
         user_input = st.text_input("🔤 Type your answer:")
 
         col1, col2, col3 = st.columns(3)
+
         with col1:
             if st.button("✅ Submit Answer"):
                 st.session_state.attempts += 1
@@ -157,5 +166,7 @@ elif mode == "Stump the AI with your own riddle":
             st.markdown(f"**AI thinks:** {ai_answer}")
         else:
             st.warning("Please type a riddle first!")
+
 st.markdown("---")
 st.markdown("🗣️ You can even stump the AI with your own riddle in the input box above!")
+
